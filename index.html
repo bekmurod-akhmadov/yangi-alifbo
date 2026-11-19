@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yangi alifbo</title>
+<meta name="description" content="Matnni takomillashtirilgan oʻzbek lotin alifbosiga oʻgiruvchi vosita">
+<style>
+  :root {
+    --bg: #eef3f9;
+    --card: #ffffff;
+    --text: #14213d;
+    --muted: #5b6b85;
+    --border: #d5deea;
+    --accent: #1d3a8a;
+    --accent-ink: #ffffff;
+    --new: #c8102e;
+    --field: #f8fafd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1522; --card: #172033; --text: #e6ecf7; --muted: #9aa8c2;
+      --border: #2a3650; --accent: #6f93ff; --accent-ink: #0f1522; --new: #ff6b7d; --field: #111a2b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1522; --card: #172033; --text: #e6ecf7; --muted: #9aa8c2;
+    --border: #2a3650; --accent: #6f93ff; --accent-ink: #0f1522; --new: #ff6b7d; --field: #111a2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  header h1 { margin: 0 0 4px; font-size: 1.8rem; color: var(--accent); letter-spacing: .3px; }
+  header p { margin: 0 0 20px; color: var(--muted); }
+  .map { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip {
+    background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 12px; font-size: .95rem;
+  }
+  .chip b { color: var(--new); }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  select, button, label.btn {
+    font: inherit; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); padding: 8px 12px; cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .panel h2 { font-size: 1rem; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .panel h2 small { color: var(--muted); font-weight: 400; }
+  textarea {
+    width: 100%; min-height: 300px; resize: vertical; font: inherit; font-size: 1.05rem;
+    background: var(--field); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px;
+  }
+  .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .opt { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .95rem; }
+  .toast { color: var(--accent); font-size: .9rem; min-height: 1.2em; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .95rem; }
+  th, td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+  th { color: var(--muted); font-weight: 600; }
+  td.new { color: var(--new); font-weight: 600; }
+  details { margin-top: 24px; }
+  summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Yangi oʻzbek alifbosi</h1>
+    <p>Matnni takomillashtirilgan oʻzbek lotin alifbosiga avtomatik oʻgiring.</p>
+  </header>
+
+  <div class="map">
+    <span class="chip">Gʻ gʻ → <b>Ğ ğ</b></span>
+    <span class="chip">Oʻ oʻ → <b>Ö ö</b></span>
+    <span class="chip">Sh sh → <b>Ş ş</b></span>
+    <span class="chip">Ch ch → <b>Ç ç</b></span>
+  </div>
+
+  <div class="controls">
+    <select id="mode" aria-label="Yoʻnalish">
+      <option value="auto">Avtomatik aniqlash → Yangi alifbo</option>
+      <option value="lat">Joriy lotin → Yangi alifbo</option>
+      <option value="cyr">Kirill → Yangi alifbo</option>
+      <option value="back">Yangi alifbo → Joriy lotin</option>
+    </select>
+    <label class="opt"><input type="checkbox" id="tutuq" checked> Tutuq belgisini ’ ga keltirish</label>
+    <label class="btn" for="file">📄 .txt fayl yuklash</label>
+    <input type="file" id="file" accept=".txt,text/plain">
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Kiritish <small id="inCount">0 belgi</small></h2>
+      <textarea id="input" placeholder="Matnni shu yerga yozing yoki joylang…&#10;Masalan: Oʻzbekiston — chiroyli va shirin gʻoyalar yurti.">Oʻzbekiston — chiroyli va shirin gʻoyalar yurti. Shoshilmang, choy iching!</textarea>
+      <div class="row">
+        <button id="clear">Tozalash</button>
+        <button id="paste">Joylash</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Natija <small id="outCount">0 belgi</small></h2>
+      <textarea id="output" readonly></textarea>
+      <div class="row">
+        <button class="primary" id="copy">Nusxa olish</button>
+        <button id="download">Yuklab olish (.txt)</button>
+        <span class="toast" id="toast"></span>
+      </div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Takomillashtirilgan oʻzbek alifbosi (29 belgi)</summary>
+    <table id="alphabet"><thead><tr><th>#</th><th>Bosma</th><th>Talaffuzi</th></tr></thead><tbody></tbody></table>
+  </details>
+</div>
+
+<script>
+// Joriy lotindagi oʻ/gʻ uchun ishlatiladigan barcha apostrof variantlari
+const APOS = "‘’ʻʼ'`´";
+const APOS_RE = "[" + APOS.replace(/[\]\\^-]/g, "\\$&") + "]";
+const TUTUQ = "’";
+
+const isUpper = c => c && c !== c.toLowerCase() && c === c.toUpperCase();
+
+// Joriy lotin → yangi
+function latToNew(text, normTutuq) {
+  let t = text
+    .replace(new RegExp("G" + APOS_RE, "g"), "Ğ")
+    .replace(new RegExp("g" + APOS_RE, "g"), "ğ")
+    .replace(new RegExp("O" + APOS_RE, "g"), "Ö")
+    .replace(new RegExp("o" + APOS_RE, "g"), "ö")
+    .replace(/S[hH]/g, "Ş").replace(/s[hH]/g, "ş")
+    .replace(/C[hH]/g, "Ç").replace(/c[hH]/g, "ç");
+  if (normTutuq) {
+    // Harflar orasidagi / undosh yonidagi qolgan apostroflar — tutuq belgisi
+    t = t.replace(new RegExp("(\\p{L})" + APOS_RE + "(?=\\p{L})", "gu"), "$1" + TUTUQ);
+  }
+  return t;
+}
+
+// Kirill → yangi
+const CYR = {
+  "а":"a","б":"b","в":"v","г":"g","д":"d","ж":"j","з":"z","и":"i","й":"y","к":"k",
+  "л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f",
+  "х":"x","ш":"ş","ч":"ç","ғ":"ğ","ў":"ö","қ":"q","ҳ":"h","ё":"yo","ю":"yu","я":"ya",
+  "ы":"i","щ":"ş","э":"e","ъ":TUTUQ,"ь":""
+};
+const CYR_VOWELS = "аеёиоуўэюяыАЕЁИОУЎЭЮЯЫ";
+function cyrToNew(text) {
+  let out = "";
+  const chars = [...text];
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i], lo = ch.toLowerCase();
+    const prev = chars[i - 1] || "", next = chars[i + 1] || "";
+    const prevIsLetter = /\p{L}/u.test(prev);
+    let r;
+    if (lo === "е") {
+      r = (!prevIsLetter || CYR_VOWELS.includes(prev) || "ъьЪЬ".includes(prev)) ? "ye" : "e";
+    } else if (lo === "ц") {
+      r = (!prevIsLetter || !CYR_VOWELS.includes(prev)) ? "s" : "ts";
+    } else if (lo in CYR) {
+      r = CYR[lo];
+    } else { out += ch; continue; }
+    if (ch !== lo && r) {
+      // Bosh harf: soʻz toʻliq katta harfda boʻlsa — hammasi katta
+      r = (r.length > 1 && (isUpper(next) || (isUpper(prev) && !/\p{L}/u.test(next))))
+        ? r.toUpperCase() : r[0].toUpperCase() + r.slice(1);
+    }
+    out += r;
+  }
+  return out;
+}
+
+// Yangi → joriy lotin
+function newToLat(text) {
+  const chars = [...text];
+  const pair = { "Ş":"Sh","Ç":"Ch" };
+  return chars.map((c, i) => {
+    switch (c) {
+      case "Ğ": return "Gʻ"; case "ğ": return "gʻ";
+      case "Ö": return "Oʻ"; case "ö": return "oʻ";
+      case "ş": return "sh"; case "ç": return "ch";
+      case "Ş": case "Ç": {
+        const allCaps = isUpper(chars[i + 1]) || (isUpper(chars[i - 1]) && !/\p{L}/u.test(chars[i + 1] || ""));
+        return allCaps ? pair[c].toUpperCase() : pair[c];
+      }
+      case TUTUQ: return /\p{L}/u.test(chars[i - 1] || "") && /\p{L}/u.test(chars[i + 1] || "") ? "ʼ" : c;
+      default: return c;
+    }
+  }).join("");
+}
+
+const $ = id => document.getElementById(id);
+const input = $("input"), output = $("output"), mode = $("mode"), tutuq = $("tutuq");
+
+function detect(text) {
+  const cyr = (text.match(/[Ѐ-ӿ]/g) || []).length;
+  const lat = (text.match(/[A-Za-z]/g) || []).length;
+  return cyr > lat ? "cyr" : "lat";
+}
+
+function convert() {
+  const text = input.value;
+  let m = mode.value === "auto" ? detect(text) : mode.value;
+  let res;
+  if (m === "cyr") res = latToNew(cyrToNew(text), tutuq.checked);
+  else if (m === "back") res = newToLat(text);
+  else res = latToNew(text, tutuq.checked);
+  output.value = res;
+  $("inCount").textContent = [...text].length + " belgi";
+  $("outCount").textContent = [...res].length + " belgi";
+  try { localStorage.setItem("ya-mode", mode.value); } catch (e) {}
+}
+
+function toast(msg) {
+  $("toast").textContent = msg;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => $("toast").textContent = "", 1800);
+}
+
+input.addEventListener("input", convert);
+mode.addEventListener("change", convert);
+tutuq.addEventListener("change", convert);
+$("clear").onclick = () => { input.value = ""; convert(); input.focus(); };
+$("paste").onclick = async () => {
+  try { input.value = await navigator.clipboard.readText(); convert(); }
+  catch (e) { toast("Joylashga ruxsat berilmadi"); }
+};
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(output.value); }
+  catch (e) { output.select(); document.execCommand("copy"); }
+  toast("Nusxa olindi ✓");
+};
+let downloadsApi;
+(async () => {
+  try { if (window.claude && claude.use) downloadsApi = await claude.use("downloads"); } catch (e) {}
+})();
+$("download").onclick = async () => {
+  if (!output.value) { toast("Natija boʻsh"); return; }
+  if (downloadsApi) {
+    try { await downloadsApi.save({ filename: "yangi_alifbo.txt", data: output.value }); toast("Saqlandi ✓"); }
+    catch (e) { if (e && e.code !== "declined") toast("Yuklab boʻlmadi"); }
+    return;
+  }
+  const blob = new Blob([output.value], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "yangi_alifbo.txt";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$("file").onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { input.value = r.result; convert(); };
+  r.readAsText(f, "utf-8");
+  e.target.value = "";
+};
+
+// Alifbo jadvali
+const ALPHABET = [
+  ["A a","a"],["B b","be"],["D d","de"],["E e","e"],["F f","fe"],["G g","ge"],["Ğ ğ","ğe",1],
+  ["H h","he"],["I i","i"],["J j","je"],["K k","ke"],["L l","le"],["M m","me"],["N n","ne"],
+  ["O o","o"],["Ö ö","ö",1],["P p","pe"],["Q q","qe"],["R r","re"],["S s","se"],["Ş ş","şe",1],
+  ["Ç ç","çe",1],["T t","te"],["U u","u"],["V v","ve"],["X x","xe"],["Y y","ye"],["Z z","ze"],
+  ["’","Tutuq belgisi"]
+];
+$("alphabet").tBodies[0].innerHTML = ALPHABET.map((r, i) =>
+  `<tr><td>${i + 1}</td><td class="${r[2] ? "new" : ""}">${r[0]}</td><td class="${r[2] ? "new" : ""}">${r[1]}</td></tr>`
+).join("");
+
+try { const s = localStorage.getItem("ya-mode"); if (s) mode.value = s; } catch (e) {}
+convert();
+</script>
+</body>
+</html>
