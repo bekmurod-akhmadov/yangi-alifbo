@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Yangi alifbo</title>
-<meta name="description" content="Matnni takomillashtirilgan oʻzbek lotin alifbosiga oʻgiruvchi vosita">
+<meta name="description" content="Matnni, Word va Excel fayllarni takomillashtirilgan oʻzbek lotin alifbosiga oʻgiruvchi vosita">
 <style>
   :root {
     --bg: #eef3f9;
@@ -16,16 +16,20 @@
     --accent-ink: #ffffff;
     --new: #c8102e;
     --field: #f8fafd;
+    --ok-bg: #e7f6ec;
+    --ok-border: #9fd8b2;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0f1522; --card: #172033; --text: #e6ecf7; --muted: #9aa8c2;
       --border: #2a3650; --accent: #6f93ff; --accent-ink: #0f1522; --new: #ff6b7d; --field: #111a2b;
+      --ok-bg: #14301f; --ok-border: #2f6b45;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0f1522; --card: #172033; --text: #e6ecf7; --muted: #9aa8c2;
     --border: #2a3650; --accent: #6f93ff; --accent-ink: #0f1522; --new: #ff6b7d; --field: #111a2b;
+    --ok-bg: #14301f; --ok-border: #2f6b45;
   }
   * { box-sizing: border-box; }
   body {
@@ -47,9 +51,10 @@
     background: var(--card); color: var(--text); padding: 8px 12px; cursor: pointer;
   }
   button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
-  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-width: 0; }
   .panel h2 { font-size: 1rem; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; }
   .panel h2 small { color: var(--muted); font-weight: 400; }
   textarea {
@@ -57,9 +62,20 @@
     background: var(--field); color: var(--text); border: 1px solid var(--border);
     border-radius: 8px; padding: 10px;
   }
-  .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
   .opt { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .95rem; }
   .toast { color: var(--accent); font-size: .9rem; min-height: 1.2em; }
+  .filebar {
+    display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: var(--ok-bg); border: 1px solid var(--ok-border); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 12px;
+  }
+  .filebar.show { display: flex; }
+  .filebar .name { font-weight: 600; word-break: break-all; }
+  .filebar .meta { color: var(--muted); font-size: .9rem; }
+  .filebar .spacer { flex: 1; }
+  .drop { outline: 2px dashed var(--accent); outline-offset: 4px; }
+  .hint { color: var(--muted); font-size: .9rem; margin: -4px 0 12px; }
   table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .95rem; }
   th, td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: center; }
   th { color: var(--muted); font-weight: 600; }
@@ -73,7 +89,7 @@
 <div class="wrap">
   <header>
     <h1>Yangi oʻzbek alifbosi</h1>
-    <p>Matnni takomillashtirilgan oʻzbek lotin alifbosiga avtomatik oʻgiring.</p>
+    <p>Matn, Word va Excel fayllarni takomillashtirilgan oʻzbek lotin alifbosiga avtomatik oʻgiring.</p>
   </header>
 
   <div class="map">
@@ -91,8 +107,20 @@
       <option value="back">Yangi alifbo → Joriy lotin</option>
     </select>
     <label class="opt"><input type="checkbox" id="tutuq" checked> Tutuq belgisini ’ ga keltirish</label>
-    <label class="btn" for="file">📄 .txt fayl yuklash</label>
-    <input type="file" id="file" accept=".txt,text/plain">
+    <label class="btn" for="file">📄 Fayl yuklash (.docx, .xlsx, .txt)</label>
+    <input type="file" id="file" accept=".txt,.docx,.xlsx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+  </div>
+  <p class="hint">Faylni sahifaga sudrab tashlasangiz ham boʻladi. Word va Excel fayllarda formatlash, jadval va shriftlar saqlanadi — faqat matn oʻgiriladi.</p>
+
+  <div class="filebar" id="filebar">
+    <span>✅</span>
+    <div>
+      <div class="name" id="fileName"></div>
+      <div class="meta" id="fileMeta"></div>
+    </div>
+    <span class="spacer"></span>
+    <button class="primary" id="fileDownload">Oʻgirilgan faylni yuklab olish</button>
+    <button id="fileClose" aria-label="Faylni yopish">✕</button>
   </div>
 
   <div class="grid">
@@ -121,31 +149,31 @@
   </details>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-// Joriy lotindagi oʻ/gʻ uchun ishlatiladigan barcha apostrof variantlari
+/* ================= Oʻgirish qoidalari ================= */
+// Har bir funksiya manba matnning har bir belgisi uchun natija qismini qaytaradi
+// (ikki harfli birikmada birinchi belgi natijani oladi, ikkinchisi ""),
+// shuning uchun Word/Excel'da matn bir nechta "run"ga boʻlingan boʻlsa ham toʻgʻri ishlaydi.
+
 const APOS = "‘’ʻʼ'`´";
-const APOS_RE = "[" + APOS.replace(/[\]\\^-]/g, "\\$&") + "]";
 const TUTUQ = "’";
+const isLetter = c => !!c && /\p{L}/u.test(c);
+const isUpper = c => !!c && c !== c.toLowerCase() && c === c.toUpperCase();
 
-const isUpper = c => c && c !== c.toLowerCase() && c === c.toUpperCase();
-
-// Joriy lotin → yangi
-function latToNew(text, normTutuq) {
-  let t = text
-    .replace(new RegExp("G" + APOS_RE, "g"), "Ğ")
-    .replace(new RegExp("g" + APOS_RE, "g"), "ğ")
-    .replace(new RegExp("O" + APOS_RE, "g"), "Ö")
-    .replace(new RegExp("o" + APOS_RE, "g"), "ö")
-    .replace(/S[hH]/g, "Ş").replace(/s[hH]/g, "ş")
-    .replace(/C[hH]/g, "Ç").replace(/c[hH]/g, "ç");
-  if (normTutuq) {
-    // Harflar orasidagi / undosh yonidagi qolgan apostroflar — tutuq belgisi
-    t = t.replace(new RegExp("(\\p{L})" + APOS_RE + "(?=\\p{L})", "gu"), "$1" + TUTUQ);
+function mapLat(ch, normTutuq) {
+  const out = new Array(ch.length);
+  const OG = { G: "Ğ", g: "ğ", O: "Ö", o: "ö" };
+  const SC = { S: "Ş", s: "ş", C: "Ç", c: "ç" };
+  for (let i = 0; i < ch.length; i++) {
+    const c = ch[i], n = ch[i + 1];
+    if (OG[c] && n && APOS.includes(n)) { out[i] = OG[c]; out[++i] = ""; continue; }
+    if (SC[c] && (n === "h" || n === "H")) { out[i] = SC[c]; out[++i] = ""; continue; }
+    out[i] = (normTutuq && APOS.includes(c) && isLetter(ch[i - 1]) && isLetter(n)) ? TUTUQ : c;
   }
-  return t;
+  return out;
 }
 
-// Kirill → yangi
 const CYR = {
   "а":"a","б":"b","в":"v","г":"g","д":"d","ж":"j","з":"z","и":"i","й":"y","к":"k",
   "л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f",
@@ -153,52 +181,47 @@ const CYR = {
   "ы":"i","щ":"ş","э":"e","ъ":TUTUQ,"ь":""
 };
 const CYR_VOWELS = "аеёиоуўэюяыАЕЁИОУЎЭЮЯЫ";
-function cyrToNew(text) {
-  let out = "";
-  const chars = [...text];
-  for (let i = 0; i < chars.length; i++) {
-    const ch = chars[i], lo = ch.toLowerCase();
-    const prev = chars[i - 1] || "", next = chars[i + 1] || "";
-    const prevIsLetter = /\p{L}/u.test(prev);
+function mapCyr(ch, normTutuq) {
+  const out = new Array(ch.length);
+  for (let i = 0; i < ch.length; i++) {
+    const c = ch[i], lo = c.toLowerCase(), prev = ch[i - 1], next = ch[i + 1];
     let r;
-    if (lo === "е") {
-      r = (!prevIsLetter || CYR_VOWELS.includes(prev) || "ъьЪЬ".includes(prev)) ? "ye" : "e";
-    } else if (lo === "ц") {
-      r = (!prevIsLetter || !CYR_VOWELS.includes(prev)) ? "s" : "ts";
-    } else if (lo in CYR) {
-      r = CYR[lo];
-    } else { out += ch; continue; }
-    if (ch !== lo && r) {
-      // Bosh harf: soʻz toʻliq katta harfda boʻlsa — hammasi katta
-      r = (r.length > 1 && (isUpper(next) || (isUpper(prev) && !/\p{L}/u.test(next))))
+    if (lo === "е") r = (!isLetter(prev) || CYR_VOWELS.includes(prev) || "ъьЪЬ".includes(prev)) ? "ye" : "e";
+    else if (lo === "ц") r = (!isLetter(prev) || !CYR_VOWELS.includes(prev)) ? "s" : "ts";
+    else if (lo in CYR) r = CYR[lo];
+    else {
+      out[i] = (normTutuq && APOS.includes(c) && isLetter(prev) && isLetter(next)) ? TUTUQ : c;
+      continue;
+    }
+    if (c !== lo && r) {
+      // Soʻz toʻliq katta harfda boʻlsa — hammasi katta (ЁШЛАР → YOŞLAR), aks holda Yo
+      r = (r.length > 1 && (isUpper(next) || (isUpper(prev) && !isLetter(next))))
         ? r.toUpperCase() : r[0].toUpperCase() + r.slice(1);
     }
-    out += r;
+    out[i] = r;
   }
   return out;
 }
 
-// Yangi → joriy lotin
-function newToLat(text) {
-  const chars = [...text];
-  const pair = { "Ş":"Sh","Ç":"Ch" };
-  return chars.map((c, i) => {
+function mapBack(ch) {
+  const pair = { "Ş": "Sh", "Ç": "Ch" };
+  return ch.map((c, i) => {
     switch (c) {
       case "Ğ": return "Gʻ"; case "ğ": return "gʻ";
       case "Ö": return "Oʻ"; case "ö": return "oʻ";
       case "ş": return "sh"; case "ç": return "ch";
+      // Alohida s+h / c+h joriy alifboda "sh"/"ch" deb oʻqilmasligi uchun tutuq qoʻyiladi
+      case "s": case "S": case "c": case "C":
+        return (ch[i + 1] === "h" || ch[i + 1] === "H") ? c + "ʼ" : c;
       case "Ş": case "Ç": {
-        const allCaps = isUpper(chars[i + 1]) || (isUpper(chars[i - 1]) && !/\p{L}/u.test(chars[i + 1] || ""));
+        const allCaps = isUpper(ch[i + 1]) || (isUpper(ch[i - 1]) && !isLetter(ch[i + 1]));
         return allCaps ? pair[c].toUpperCase() : pair[c];
       }
-      case TUTUQ: return /\p{L}/u.test(chars[i - 1] || "") && /\p{L}/u.test(chars[i + 1] || "") ? "ʼ" : c;
+      case TUTUQ: return isLetter(ch[i - 1]) && isLetter(ch[i + 1]) ? "ʼ" : c;
       default: return c;
     }
-  }).join("");
+  });
 }
-
-const $ = id => document.getElementById(id);
-const input = $("input"), output = $("output"), mode = $("mode"), tutuq = $("tutuq");
 
 function detect(text) {
   const cyr = (text.match(/[Ѐ-ӿ]/g) || []).length;
@@ -206,31 +229,214 @@ function detect(text) {
   return cyr > lat ? "cyr" : "lat";
 }
 
-function convert() {
-  const text = input.value;
-  let m = mode.value === "auto" ? detect(text) : mode.value;
-  let res;
-  if (m === "cyr") res = latToNew(cyrToNew(text), tutuq.checked);
-  else if (m === "back") res = newToLat(text);
-  else res = latToNew(text, tutuq.checked);
-  output.value = res;
-  $("inCount").textContent = [...text].length + " belgi";
-  $("outCount").textContent = [...res].length + " belgi";
-  try { localStorage.setItem("ya-mode", mode.value); } catch (e) {}
+function mapChars(ch, mode, normTutuq) {
+  if (mode === "cyr") return mapCyr(ch, normTutuq);
+  if (mode === "back") return mapBack(ch);
+  return mapLat(ch, normTutuq);
 }
+
+function convertText(text, mode, normTutuq) {
+  if (mode === "auto") mode = detect(text);
+  return mapChars([...text], mode, normTutuq).join("");
+}
+
+/* ================= Word / Excel ================= */
+const NS_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const NS_S = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+
+// Fayl ichidagi qaysi XML qismlarda qaysi teglarni oʻgirish kerak
+const FORMATS = {
+  docx: {
+    label: "Word hujjat",
+    parts: name => /^word\/(document|header\d*|footer\d*|footnotes|endnotes|comments)\.xml$/.test(name),
+    ns: NS_W, textTag: "t", groupTags: ["p"], skipParents: []
+  },
+  xlsx: {
+    label: "Excel jadval",
+    parts: name => name === "xl/sharedStrings.xml" || /^xl\/worksheets\/sheet\d+\.xml$/.test(name),
+    ns: NS_S, textTag: "t", groupTags: ["si", "is"], skipParents: ["rPh"]
+  }
+};
+
+function closestGroup(el, fmt) {
+  for (let p = el.parentNode; p && p.nodeType === 1; p = p.parentNode) {
+    if (p.namespaceURI === fmt.ns && fmt.groupTags.includes(p.localName)) return p;
+  }
+  return null;
+}
+
+// XML hujjatdagi matn tugunlarini paragraf/katakcha boʻyicha guruhlab qaytaradi
+function collectGroups(doc, fmt) {
+  const groups = new Map();
+  const nodes = doc.getElementsByTagNameNS(fmt.ns, fmt.textTag);
+  for (let i = 0; i < nodes.length; i++) {
+    const t = nodes[i];
+    if (fmt.skipParents.includes(t.parentNode && t.parentNode.localName)) continue;
+    const g = closestGroup(t, fmt) || t;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(t);
+  }
+  return [...groups.values()];
+}
+
+function convertGroup(nodes, mode, normTutuq) {
+  const pieces = nodes.map(n => [...n.textContent]);
+  const flat = [].concat(...pieces);
+  if (!flat.length) return { before: "", after: "" };
+  const out = mapChars(flat, mode, normTutuq);
+  let k = 0;
+  nodes.forEach((n, idx) => {
+    let s = "";
+    for (let j = 0; j < pieces[idx].length; j++) s += out[k++];
+    if (s !== n.textContent) n.textContent = s;
+  });
+  return { before: flat.join(""), after: out.join("") };
+}
+
+const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n';
+
+async function convertOffice(buffer, kind, mode, normTutuq) {
+  const fmt = FORMATS[kind];
+  const zip = await JSZip.loadAsync(buffer);
+  const names = Object.keys(zip.files).filter(n => fmt.parts(n)).sort((a, b) => {
+    // Matn koʻrinishi uchun tartib: asosiy qism avval
+    const w = n => /document|sharedStrings/.test(n) ? 0 : 1;
+    return w(a) - w(b) || a.localeCompare(b, undefined, { numeric: true });
+  });
+  const parsed = [];
+  for (const name of names) {
+    const xml = await zip.file(name).async("string");
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    if (doc.getElementsByTagName("parsererror").length) throw new Error("XML oʻqilmadi: " + name);
+    parsed.push({ name, xml, doc, groups: collectGroups(doc, fmt) });
+  }
+  const before = [], after = [];
+  let changed = 0;
+  for (const p of parsed) {
+    let touched = false;
+    for (const g of p.groups) {
+      // Avtomatik rejimda har bir paragraf/katakcha alohida aniqlanadi (aralash hujjatlar uchun)
+      const m = mode === "auto" ? detect(g.map(n => n.textContent).join("")) : mode;
+      const r = convertGroup(g, m, normTutuq);
+      if (r.before) { before.push(r.before); after.push(r.after); }
+      if (r.before !== r.after) { touched = true; changed++; }
+    }
+    if (touched) {
+      let s = new XMLSerializer().serializeToString(p.doc);
+      if (!s.startsWith("<?xml")) s = XML_DECL + s;
+      zip.file(p.name, s);
+    }
+  }
+  const mime = kind === "docx"
+    ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const blob = await zip.generateAsync({ type: "blob", mimeType: mime, compression: "DEFLATE" });
+  return { blob, before: before.join("\n"), after: after.join("\n"), changed, total: before.length };
+}
+
+/* ================= Interfeys ================= */
+const $ = id => document.getElementById(id);
+const input = $("input"), output = $("output"), mode = $("mode"), tutuq = $("tutuq");
+let fileState = null; // { name, kind, buffer, result }
+
+function updateCounts() {
+  $("inCount").textContent = [...input.value].length + " belgi";
+  $("outCount").textContent = [...output.value].length + " belgi";
+}
+
+function convert() {
+  output.value = convertText(input.value, mode.value, tutuq.checked);
+  updateCounts();
+}
+
+function saveMode() { try { localStorage.setItem("ya-mode", mode.value); } catch (e) {} }
 
 function toast(msg) {
   $("toast").textContent = msg;
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => $("toast").textContent = "", 1800);
+  toast.t = setTimeout(() => $("toast").textContent = "", 2500);
 }
 
-input.addEventListener("input", convert);
-mode.addEventListener("change", convert);
-tutuq.addEventListener("change", convert);
-$("clear").onclick = () => { input.value = ""; convert(); input.focus(); };
+let downloadsApi = null;
+(async () => {
+  try { if (window.claude && claude.use) downloadsApi = await claude.use("downloads"); } catch (e) {}
+})();
+
+async function saveFile(filename, data, mime) {
+  if (downloadsApi) {
+    try { await downloadsApi.save({ filename, data }); toast("Saqlandi ✓"); }
+    catch (e) { if (!e || e.code !== "declined") toast("Yuklab boʻlmadi"); }
+    return;
+  }
+  const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function outName(name) {
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+  return base + "_yangi" + ext;
+}
+
+async function processFile() {
+  if (!fileState) return;
+  if (typeof JSZip === "undefined") { toast("Kutubxona yuklanmadi — internetni tekshiring"); return; }
+  try {
+    $("fileMeta").textContent = "Oʻgirilmoqda…";
+    $("fileDownload").disabled = true;
+    const r = await convertOffice(fileState.buffer.slice(0), fileState.kind, mode.value, tutuq.checked);
+    fileState.result = r;
+    input.value = r.before;
+    output.value = r.after;
+    updateCounts();
+    $("fileMeta").textContent = `${FORMATS[fileState.kind].label} · ${r.total} ta matn boʻlagi, ${r.changed} tasi oʻzgardi`;
+    $("fileDownload").disabled = false;
+  } catch (e) {
+    console.error(e);
+    closeFile();
+    toast("Faylni oʻqib boʻlmadi: u buzilgan yoki parol bilan himoyalangan boʻlishi mumkin");
+  }
+}
+
+function closeFile() {
+  fileState = null;
+  $("filebar").classList.remove("show");
+}
+
+function openFile(f) {
+  const ext = (f.name.split(".").pop() || "").toLowerCase();
+  if (ext === "doc" || ext === "xls") {
+    toast(`Eski .${ext} formati qoʻllanmaydi — faylni Word/Excel'da .${ext}x qilib saqlab, qayta yuklang`);
+    return;
+  }
+  const r = new FileReader();
+  if (ext === "docx" || ext === "xlsx") {
+    r.onload = () => {
+      fileState = { name: f.name, kind: ext, buffer: r.result };
+      $("fileName").textContent = f.name;
+      $("filebar").classList.add("show");
+      processFile();
+    };
+    r.readAsArrayBuffer(f);
+  } else {
+    closeFile();
+    r.onload = () => { input.value = r.result; convert(); };
+    r.readAsText(f, "utf-8");
+  }
+}
+
+input.addEventListener("input", () => { if (fileState) closeFile(); convert(); });
+mode.addEventListener("change", () => { saveMode(); fileState ? processFile() : convert(); });
+tutuq.addEventListener("change", () => fileState ? processFile() : convert());
+$("clear").onclick = () => { closeFile(); input.value = ""; convert(); input.focus(); };
 $("paste").onclick = async () => {
-  try { input.value = await navigator.clipboard.readText(); convert(); }
+  try { input.value = await navigator.clipboard.readText(); closeFile(); convert(); }
   catch (e) { toast("Joylashga ruxsat berilmadi"); }
 };
 $("copy").onclick = async () => {
@@ -238,32 +444,33 @@ $("copy").onclick = async () => {
   catch (e) { output.select(); document.execCommand("copy"); }
   toast("Nusxa olindi ✓");
 };
-let downloadsApi;
-(async () => {
-  try { if (window.claude && claude.use) downloadsApi = await claude.use("downloads"); } catch (e) {}
-})();
-$("download").onclick = async () => {
+$("download").onclick = () => {
   if (!output.value) { toast("Natija boʻsh"); return; }
-  if (downloadsApi) {
-    try { await downloadsApi.save({ filename: "yangi_alifbo.txt", data: output.value }); toast("Saqlandi ✓"); }
-    catch (e) { if (e && e.code !== "declined") toast("Yuklab boʻlmadi"); }
-    return;
-  }
-  const blob = new Blob([output.value], { type: "text/plain;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "yangi_alifbo.txt";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveFile("yangi_alifbo.txt", output.value, "text/plain;charset=utf-8");
 };
+$("fileDownload").onclick = () => {
+  if (fileState && fileState.result) saveFile(outName(fileState.name), fileState.result.blob);
+};
+$("fileClose").onclick = closeFile;
 $("file").onchange = e => {
   const f = e.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => { input.value = r.result; convert(); };
-  r.readAsText(f, "utf-8");
+  if (f) openFile(f);
   e.target.value = "";
 };
+
+// Sudrab tashlash
+const wrap = document.querySelector(".wrap");
+["dragenter", "dragover"].forEach(ev => document.addEventListener(ev, e => {
+  if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); wrap.classList.add("drop"); }
+}));
+["dragleave", "drop"].forEach(ev => document.addEventListener(ev, e => {
+  if (ev === "dragleave" && e.relatedTarget) return;
+  wrap.classList.remove("drop");
+}));
+document.addEventListener("drop", e => {
+  const f = e.dataTransfer && e.dataTransfer.files[0];
+  if (f) { e.preventDefault(); openFile(f); }
+});
 
 // Alifbo jadvali
 const ALPHABET = [

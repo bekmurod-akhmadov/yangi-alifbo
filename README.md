@@ -13,7 +13,8 @@ Matnni takomillashtirilgan oʻzbek lotin alifbosiga oʻgiruvchi bir sahifali veb
 - Joriy lotin → yangi alifbo
 - Kirill → yangi alifbo (avtomatik aniqlash)
 - Yangi alifbo → joriy lotin
-- Nusxa olish, `.txt` yuklash va yuklab olish
+- Word (`.docx`) va Excel (`.xlsx`) fayllarni formatlashni saqlagan holda oʻgirish
+- Nusxa olish, `.txt` yuklash va yuklab olish, faylni sudrab tashlash
 
 ## Ishga tushirish
 `index.html` faylini brauzerda oching — server kerak emas.
