@@ -2,6 +2,8 @@
 
 Matnni takomillashtirilgan oʻzbek lotin alifbosiga oʻgiruvchi bir sahifali veb-vosita.
 
+🌐 **Sayt:** https://bekmurod-akhmadov.github.io/yangi-alifbo/
+
 | Joriy | Yangi |
 |-------|-------|
 | Gʻ gʻ | Ğ ğ |
